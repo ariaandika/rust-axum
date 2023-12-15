@@ -1,19 +1,15 @@
-import { defineConfig, tlsRoot, server } from "./config.lib"
-
-
-const tls = tlsRoot("/etc/letsencrypt")
-const { static: serve, proxy } = server
+import { defineConfig } from "./config.lib"
 
 export default defineConfig({
-  servers: [
-    serve({
-      port: 80,
-      root: "/var/me",
-    }),
-    proxy({
-      port: 443,
-      pass: "http://localhost:3000",
-      domain: tls("deuzo.me")
-    }),
-  ]
+  servers: {
+    "deuzo.me": {
+      proxy: {
+        target: "localhost:4040",
+      }
+    }
+  },
+  port: 3000,
+  tls: {
+    dir: "/etc/letsencrypt",
+  }
 })

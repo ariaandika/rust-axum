@@ -1,7 +1,34 @@
 export type AutoConfig<Keys = keyof Add> = Keys extends keyof Add ? { type: Keys } & Add[Keys] & BaseServer : never
 
+// export type Config = {
+//   servers?: AutoConfig[]
+// }
+
 export type Config = {
-  servers?: AutoConfig[]
+  servers: Record<string, ServerSetting>
+  tls: TlsSetting
+  port: number
+}
+
+type TlsSetting = {
+  dir: string
+  key?: string
+  cert?: string
+}
+
+type ServerSetting = {
+  static_serve?: StaticSetting
+  proxy?: ProxySetting
+}
+
+type StaticSetting = {
+  target: string
+  path?: string
+}
+
+type ProxySetting = {
+  target: string
+  path?: string
 }
 
 export type BaseServer = {
