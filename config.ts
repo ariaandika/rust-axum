@@ -2,9 +2,10 @@ import { defineConfig } from "./config.lib"
 
 export default defineConfig({
   servers: {
-    "deuzo.me": {
+    "localhost:3000": {
       proxy: {
         target: "localhost:4040",
+        // target: "localhost:8000",
       }
     }
   },

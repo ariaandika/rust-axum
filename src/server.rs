@@ -7,7 +7,7 @@ use crate::config::Setting;
 
 
 pub async fn server() {
-    let setting_data = Setting::example();
+    let setting_data = Setting::load().expect("Cannot load config");
     let port = setting_data.port;
     let setting = Arc::new(RwLock::new(setting_data));
 
@@ -15,10 +15,10 @@ pub async fn server() {
 
     let app = Router::new()
         .fallback({
+            println!("Req:");
             let refc = Arc::clone(&setting);
             move |req| get_proxy(req,refc)
         });
-        
 
     let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}")).await.unwrap();
 

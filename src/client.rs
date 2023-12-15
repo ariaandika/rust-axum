@@ -32,7 +32,6 @@ pub async fn get_proxy(req: Request, setting: Arc<RwLock<Setting>>) -> Result<Re
         .map_err(|_|StatusCode::NOT_FOUND)?
         .to_string();
 
-
     let setting = {
         let lock = setting
             .read()
@@ -61,29 +60,7 @@ pub async fn get_proxy(req: Request, setting: Arc<RwLock<Setting>>) -> Result<Re
             println!("Connection failed: {:?}", err);
         }
     });
-
+    println!("{:?}",req.version());
     return Ok(sender.send_request(req).await.map_err(internal_server_error).into_response())
 }
 
-// pub async fn post_proxy(req: Request, setting: Arc<RwLock<Setting>>) -> Response {
-//     let setting = match req.headers().get("host") {
-//         Some(host) => {
-//             let lock = setting.read().unwrap();
-//             lock.find_by_domain(host.to_str().unwrap().to_string()).unwrap().clone()
-//         },
-//         None => return (StatusCode::NOT_FOUND, "").into_response()
-//     };
-//
-//     let stream = TcpStream::connect(format!("127.0.0.1:{}",setting.port)).await.unwrap();
-//     let io = TokioIo::new(stream);
-//     let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await.unwrap();
-//
-//     tokio::task::spawn(async move {
-//         if let Err(err) = conn.await {
-//             println!("Connection failed: {:?}", err);
-//         }
-//     });
-//
-//     return sender.send_request(req).await.unwrap().into_response()
-//
-// }
