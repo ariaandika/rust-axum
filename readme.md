@@ -1,10 +1,26 @@
 # Rust Axum
 
-## Problem
+## TLS
 
 problem with tls
 
 it uses external library `axum-server`
 
 it have problem with matching with axum version at installation
+
+## Static Server
+
+todo
+
+## Proxy
+
+using hyper we can immediately return the response
+
+## Basic Validation
+
+using `Request` extractor, we have full control
+
+## Hot Config Reload
+
+using `Arc`, `RwLock`, and tokio signal handling, easily implemented
 
