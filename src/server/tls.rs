@@ -7,7 +7,7 @@ use rustls::{ServerConfig, pki_types::CertificateDer};
 use rustls_pemfile::private_key;
 use tokio_rustls::TlsAcceptor;
 
-pub fn load_tls(cert_dir: String, key_dir: String) -> Result<TlsAcceptor, Box<dyn std::error::Error>> {
+pub fn load_tls(key_dir: String, cert_dir: String) -> Result<TlsAcceptor, Box<dyn std::error::Error>> {
     
     let cert_buf = std::io::BufReader::new(std::fs::File::open(cert_dir)?);
     let cert = CertificateDer::from(cert_buf.buffer().to_vec());

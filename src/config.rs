@@ -62,11 +62,10 @@ impl Setting {
     pub fn load() -> Result<Setting, Box<dyn std::error::Error>> {
         let handle = Command::new("bun")
             .arg("run")
-            .arg("./server/config.ts")
+            .arg("./config/config.ts")
             .output()?;
 
         let stdout = handle.stdout.as_slice();
-
         Ok(serde_json::from_slice::<Setting>(stdout)?)
     }
 
