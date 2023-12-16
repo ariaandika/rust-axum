@@ -1,29 +1,34 @@
-use std::{path::Path, io::BufReader, sync::Arc, fs::File};
-
-use rustls_pemfile::{pkcs8_private_keys, certs};
-use tokio_rustls::rustls::{ServerConfig, internal::msgs::handshake::CertificateChain, pki_types::PrivateKeyDer};
+// #![allow(unused_imports)]
 
 
+use std::{io::{BufReader, self}, fs::File, path::{Path, PathBuf}, sync::Arc};
 
-fn rustls_server_config(key: impl AsRef<Path>, cert: impl AsRef<Path>) -> Arc<ServerConfig> {
-    let mut key_reader = BufReader::new(File::open(key).unwrap());
-    let mut cert_reader = BufReader::new(File::open(cert).unwrap());
+use rustls_pemfile::{rsa_private_keys, certs};
+use tokio_rustls::{rustls::pki_types::{PrivateKeyDer, CertificateDer}, TlsAcceptor};
 
-    let key = PrivateKey(pkcs8_private_keys(&mut key_reader).unwrap().remove(0));
-    let certs = certs(&mut cert_reader)
+fn load_certs(path: &Path) -> io::Result<Vec<CertificateDer<'static>>> {
+    certs(&mut BufReader::new(File::open(path)?)).collect()
+}
+
+
+fn load_keys(path: &Path) -> io::Result<PrivateKeyDer<'static>> {
+    rsa_private_keys(&mut BufReader::new(File::open(path)?))
+        .next()
         .unwrap()
-        .into_iter()
-        .map(Certificate)
-        .collect();
+        .map(Into::into)
+}
 
-    let mut config = ServerConfig::builder()
-        .with_safe_defaults()
+
+pub fn load_tls(key_path: String, cert_path: String) -> io::Result<TlsAcceptor> {
+    let key = load_keys(&PathBuf::from(key_path))?;
+    let certs = load_certs(&PathBuf::from(cert_path))?;
+
+    let config = rustls::ServerConfig::builder()
         .with_no_client_auth()
         .with_single_cert(certs, key)
-        .expect("bad certificate/key");
+        .map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err))?;
 
-    config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
-
-    Arc::new(config)
+    let acceptor = TlsAcceptor::from(Arc::new(config));
+    Ok(acceptor)
 }
 

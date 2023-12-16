@@ -543,6 +543,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "rustls",
  "rustls-pemfile",
  "serde",
  "serde_json",
