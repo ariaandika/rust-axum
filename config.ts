@@ -1,4 +1,4 @@
-import { defineConfig } from "./config.lib"
+import { defineConfig } from "./config/config.lib"
 
 export default defineConfig({
   servers: {

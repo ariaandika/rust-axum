@@ -1,34 +1,22 @@
 // #![allow(unused_imports)]
 
 
-use std::{io::{BufReader, self}, fs::File, path::{Path, PathBuf}, sync::Arc};
+use std::sync::Arc;
 
-use rustls_pemfile::{rsa_private_keys, certs};
-use tokio_rustls::{rustls::pki_types::{PrivateKeyDer, CertificateDer}, TlsAcceptor};
+use rustls::{ServerConfig, pki_types::CertificateDer};
+use rustls_pemfile::private_key;
+use tokio_rustls::TlsAcceptor;
 
-fn load_certs(path: &Path) -> io::Result<Vec<CertificateDer<'static>>> {
-    certs(&mut BufReader::new(File::open(path)?)).collect()
-}
+pub fn load_tls(cert_dir: String, key_dir: String) -> Result<TlsAcceptor, Box<dyn std::error::Error>> {
+    
+    let cert_buf = std::io::BufReader::new(std::fs::File::open(cert_dir)?);
+    let cert = CertificateDer::from(cert_buf.buffer().to_vec());
 
-
-fn load_keys(path: &Path) -> io::Result<PrivateKeyDer<'static>> {
-    rsa_private_keys(&mut BufReader::new(File::open(path)?))
-        .next()
-        .expect("Cannot read key")
-        .map(Into::into)
-}
-
-
-pub fn load_tls(key_path: String, cert_path: String) -> io::Result<TlsAcceptor> {
-    let key = load_keys(&PathBuf::from(key_path))?;
-    let certs = load_certs(&PathBuf::from(cert_path))?;
-
-    let config = rustls::ServerConfig::builder()
+    let mut key_buf = std::io::BufReader::new(std::fs::File::open(key_dir)?);
+    let keys = private_key(&mut key_buf)?.unwrap();
+    
+    let config = ServerConfig::builder()
         .with_no_client_auth()
-        .with_single_cert(certs, key)
-        .map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err))?;
-
-    let acceptor = TlsAcceptor::from(Arc::new(config));
-    Ok(acceptor)
+        .with_single_cert(vec![cert], keys)?;
+    Ok(TlsAcceptor::from(Arc::new(config)))
 }
-

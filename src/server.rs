@@ -29,9 +29,10 @@ pub async fn server() -> Result<(), Box<dyn std::error::Error>> {
     let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}")).await?;
     let acceptor = {
         let setting = setting.read().expect("Cannot get lock for config");
-        let key = setting.tls.key.as_ref().expect("No tls key");
-        let cert = setting.tls.cert.as_ref().expect("No tls cert");
-        tls::load_tls(key.to_string(), cert.to_string())?
+        tls::load_tls(
+            setting.tls.key.clone().expect("No tls key config"),
+            setting.tls.cert.clone().expect("No tls cert config"),
+        )?
     };
 
     println!("Listening {}",listener.local_addr().expect("Cannot read local addr"));
