@@ -5,6 +5,7 @@ use tokio::signal;
 use crate::client::get_proxy;
 use crate::config::Setting;
 
+pub mod tls;
 
 pub async fn server() {
     let setting_data = Setting::load().expect("Cannot load config");
