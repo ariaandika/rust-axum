@@ -1,4 +1,4 @@
-use std::{process::Command, fs, collections::HashMap};
+use std::{process::Command, collections::HashMap};
 
 use serde::Deserialize;
 
@@ -59,24 +59,15 @@ impl Setting {
         Self { port: 3000, servers, tls: TlsSetting::example() }
     }
 
-    pub fn load() -> Result<Setting, serde_json::Error> {
-        let cwd_buf = std::env::current_dir().unwrap();
-        let cwd = cwd_buf.to_str().unwrap();
-
-        let _ = fs::write("/tmp/config.ts", format!("\
-        import config from \"{cwd}/config.ts\";\
-        console.log(JSON.stringify(config))\
-        ")).unwrap();
-
+    pub fn load() -> Result<Setting, Box<dyn std::error::Error>> {
         let handle = Command::new("bun")
             .arg("run")
-            .arg("/tmp/config.ts")
-            .output()
-            .unwrap();
+            .arg("./server/config.ts")
+            .output()?;
 
         let stdout = handle.stdout.as_slice();
 
-        serde_json::from_slice::<Setting>(stdout)
+        Ok(serde_json::from_slice::<Setting>(stdout)?)
     }
 
     pub fn reload(&mut self, new_config: Self) {

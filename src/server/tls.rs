@@ -14,7 +14,7 @@ fn load_certs(path: &Path) -> io::Result<Vec<CertificateDer<'static>>> {
 fn load_keys(path: &Path) -> io::Result<PrivateKeyDer<'static>> {
     rsa_private_keys(&mut BufReader::new(File::open(path)?))
         .next()
-        .unwrap()
+        .expect("Cannot read key")
         .map(Into::into)
 }
 

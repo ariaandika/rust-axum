@@ -6,7 +6,7 @@ pub mod config;
 
 #[tokio::main]
 async fn main() {
-    server::server().await.unwrap();
+    server::server().await.expect("Cannot start server");
 }
 
 

@@ -12,12 +12,12 @@ use crate::config::Setting;
 
 pub mod tls;
 
-pub async fn server() -> io::Result<()> {
-    let setting = Setting::load().expect("Cannot load config");
+pub async fn server() -> Result<(), Box<dyn std::error::Error>> {
+    let setting = Setting::load()?;
     let port = setting.port;
     let setting = Arc::new(RwLock::new(setting));
 
-    reload_signal(Arc::clone(&setting));
+    reload_signal(Arc::clone(&setting)).expect("Cannot setup signal handler");
 
     let app = Router::new()
         .fallback({
@@ -28,15 +28,14 @@ pub async fn server() -> io::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}")).await?;
     let acceptor = {
-        let setting = setting.read().unwrap();
-        let key = setting.tls.key.as_ref().unwrap();
-        let cert = setting.tls.cert.as_ref().unwrap();
+        let setting = setting.read().expect("Cannot get lock for config");
+        let key = setting.tls.key.as_ref().expect("No tls key");
+        let cert = setting.tls.cert.as_ref().expect("No tls cert");
         tls::load_tls(key.to_string(), cert.to_string())?
     };
 
-    println!("Listening {}",listener.local_addr().unwrap());
+    println!("Listening {}",listener.local_addr().expect("Cannot read local addr"));
 
-    // axum::serve(listener, app).await.unwrap();
     loop {
         let tower_service = app.clone();
         let (stream, _) = listener.accept().await?;
@@ -71,21 +70,23 @@ pub async fn server() -> io::Result<()> {
     }
 }
 
-fn reload_signal(r: Arc<RwLock<Setting>>) {
+fn reload_signal(r: Arc<RwLock<Setting>>) -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         match signal::unix::signal(signal::unix::SignalKind::user_defined1()) {
             Ok(mut s) => s.recv().await,
             Err(er) => return eprintln!("Err: {er}"),
         };
 
-        let setting = Setting::load().unwrap();
+        let setting = Setting::load().expect("Failed to load config");
 
         {
-            let mut lock = r.write().unwrap();
+            let mut lock = r.write().expect("Cannot get write lock for config");
             lock.reload(setting);
         }
 
-        reload_signal(r)
+        reload_signal(r).expect("Cannot setup signal handler");
     });
+
+    Ok(())
 }
 
